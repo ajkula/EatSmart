@@ -8,9 +8,9 @@ export const lightTheme = {
     accent: '#4ECDC4',
     background: '#F7F7F7',
     text: '#333333',
-    card: '#FFFFFF', // Ajout de la propriété card
-    border: '#E0E0E0', // Ajout de la propriété border
-    notification: '#FF6B6B', // Ajout de la propriété notification
+    card: '#FFFFFF',
+    border: '#E0E0E0', 
+    notification: '#FF6B6B', 
   },
 };
 
@@ -23,8 +23,8 @@ export const darkTheme = {
     accent: '#4ECDC4',
     background: '#333333',
     text: '#F7F7F7',
-    card: '#424242', // Ajout de la propriété card
-    border: '#616161', // Ajout de la propriété border
-    notification: '#FF6B6B', // Ajout de la propriété notification
+    card: '#424242',
+    border: '#616161',
+    notification: '#FF6B6B',
   },
 };

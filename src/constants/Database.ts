@@ -1,6 +1,5 @@
 import { Recipe, MealPlan, ShoppingListItem } from '../types';
 
-// Clés de stockage pour AsyncStorage
 export const STORAGE_KEYS = {
   RECIPES: 'eatsmart_recipes',
   MEAL_PLANS: 'eatsmart_meal_plans',
@@ -8,7 +7,6 @@ export const STORAGE_KEYS = {
   SETTINGS: 'eatsmart_settings',
 };
 
-// Structures de données pour le stockage local
 export interface LocalDatabase {
   recipes: Recipe[];
   mealPlans: MealPlan[];
@@ -16,14 +14,12 @@ export interface LocalDatabase {
   settings: AppSettings;
 }
 
-// Structure pour les paramètres de l'application
 export interface AppSettings {
   darkMode: boolean;
   notificationsEnabled: boolean;
-  // Ajoutez d'autres paramètres ici si nécessaire
+  servingsCountts: number;
 }
 
-// Valeurs par défaut pour l'initialisation de la base de données
 export const DEFAULT_DATABASE: LocalDatabase = {
   recipes: [
     {
@@ -212,10 +208,11 @@ export const DEFAULT_DATABASE: LocalDatabase = {
   settings: {
     darkMode: false,
     notificationsEnabled: true,
+    servingsCountts: 4,
   },
 };
 
-// Fonctions utilitaires pour la manipulation de la base de données
+//  manipulation de la DB
 export const DATABASE_UTILS = {
   getNewRecipeId: (recipes: Recipe[]): string => {
     return `recipe_${Date.now()}_${Math.floor(Math.random() * 1000)}`;

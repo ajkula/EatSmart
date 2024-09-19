@@ -21,7 +21,6 @@ const CalendarScreen = () => {
       return acc;
     }, {} as { [key: string]: { marked: boolean; dotColor: string; selected?: boolean; selectedColor?: string } });
 
-    // Ajouter les dates sélectionnées
     Object.keys(selectedDates).forEach(date => {
       marked[date] = { ...marked[date], selected: true, selectedColor: theme.colors.primary };
     });

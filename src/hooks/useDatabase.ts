@@ -3,7 +3,6 @@ import { Recipe, MealPlan, ShoppingListItem, RecipeCategory } from '../types';
 import { STORAGE_KEYS, LocalDatabase, DEFAULT_DATABASE, AppSettings } from '../constants/Database';
 
 export const useDatabase = () => {
-  // Fonctions existantes
   const storeData = async (key: string, value: any) => {
     try {
       const jsonValue = JSON.stringify(value);
@@ -23,7 +22,6 @@ export const useDatabase = () => {
     }
   };
 
-  // Fonctions existantes conservées pour la compatibilité
   const storeRecipes = (recipes: Recipe[]) => storeData(STORAGE_KEYS.RECIPES, recipes);
   const getRecipes = async (): Promise<Recipe[]> => {
     const recipes = await getData(STORAGE_KEYS.RECIPES);
@@ -43,7 +41,6 @@ export const useDatabase = () => {
   
   const getIsDarkMode = () => getData('isDarkMode') as Promise<boolean | null>;
   
-  // Nouvelles fonctions utilisant la structure de Database.ts
   const initializeDatabase = async (): Promise<void> => {
     const storedRecipes = await getData(STORAGE_KEYS.RECIPES);
     console.log("Stored recipes during initialization:", storedRecipes);
