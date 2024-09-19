@@ -1,20 +1,36 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { Provider as PaperProvider } from 'react-native-paper';
+import { useTheme } from './src/hooks/useTheme';
+import AppNavigator from './src/navigation/AppNavigator';
+import { AppContextProvider } from './src/context/AppContext';
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <AppContextProvider>
+      <ThemedApp />
+    </AppContextProvider>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+const ThemedApp = () => {
+  const { theme } = useTheme();
+
+  const updatedTheme = {
+    ...theme,
+    colors: {
+      ...theme.colors,
+      card: theme.colors.card || theme.colors.background,
+      border: theme.colors.border || theme.colors.primary,
+      notification: theme.colors.notification || theme.colors.accent,
+    },
+  };
+
+  return (
+    <PaperProvider theme={updatedTheme}>
+      <NavigationContainer theme={updatedTheme}>
+        <AppNavigator />
+      </NavigationContainer>
+    </PaperProvider>
+  );
+};
