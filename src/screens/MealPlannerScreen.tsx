@@ -7,11 +7,11 @@ import { MealPlannerScreenProps, MealPlan } from '../types';
 
 const MealPlannerScreen: React.FC<MealPlannerScreenProps> = ({ route, navigation }) => {
   const { dates } = route.params;
-  const { recipes, setMealPlans } = useAppContext();
+  const { recipes, mealPlans, setMealPlans } = useAppContext();
   const [suggestedPlan, setSuggestedPlan] = useState<MealPlan[]>([]);
 
   useEffect(() => {
-    const plan = generateMealPlan(dates, recipes);
+    const plan = generateMealPlan(dates, recipes, mealPlans);
     setSuggestedPlan(plan);
   }, [dates, recipes]);
 

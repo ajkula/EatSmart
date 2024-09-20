@@ -25,34 +25,32 @@ export const useDatabase = () => {
   const storeRecipes = (recipes: Recipe[]) => storeData(STORAGE_KEYS.RECIPES, recipes);
   const getRecipes = async (): Promise<Recipe[]> => {
     const recipes = await getData(STORAGE_KEYS.RECIPES);
-    if (!recipes || recipes.length === 0) {
+    if (!Array.isArray(recipes) || recipes.length === 0) {
       console.log("No recipes found, returning default recipes");
       return DEFAULT_DATABASE.recipes;
     }
-    console.log("Retrieved recipes:", recipes);
+    console.log("Retrieved recipes:", recipes[0].name);
     return recipes;
   };
-  
+
   const storeMealPlans = (mealPlans: MealPlan[]) => storeData(STORAGE_KEYS.MEAL_PLANS, mealPlans);
   const getMealPlans = () => getData(STORAGE_KEYS.MEAL_PLANS) as Promise<MealPlan[] | null>;
-  
-  const storeShoppingList = (shoppingList: ShoppingListItem[]) => storeData(STORAGE_KEYS.SHOPPING_LIST, shoppingList);
-  const getShoppingList = () => getData(STORAGE_KEYS.SHOPPING_LIST) as Promise<ShoppingListItem[] | null>;
-  
+
+  const storeShoppingList = async (shoppingList: ShoppingListItem[]) => await storeData(STORAGE_KEYS.SHOPPING_LIST, shoppingList);
+  const getShoppingList = async () => await getData(STORAGE_KEYS.SHOPPING_LIST) as Promise<ShoppingListItem[] | null>;
+
   const getIsDarkMode = () => getData('isDarkMode') as Promise<boolean | null>;
-  
+
   const initializeDatabase = async (): Promise<void> => {
     const storedRecipes = await getData(STORAGE_KEYS.RECIPES);
-    console.log("Stored recipes during initialization:", storedRecipes);
+    console.log("Stored recipes during initialization:", storedRecipes[0].name);
     if (!storedRecipes || storedRecipes.length === 0) {
-      console.log("Initializing database with default recipes:", DEFAULT_DATABASE.recipes);
+      console.log("Initializing database with default recipes:", DEFAULT_DATABASE.recipes[0].name);
       await storeData(STORAGE_KEYS.RECIPES, DEFAULT_DATABASE.recipes);
       await storeData(STORAGE_KEYS.MEAL_PLANS, DEFAULT_DATABASE.mealPlans);
       await storeData(STORAGE_KEYS.SHOPPING_LIST, DEFAULT_DATABASE.shoppingList);
       await storeData(STORAGE_KEYS.SETTINGS, DEFAULT_DATABASE.settings);
       console.log("Database initialized with default data");
-    } else {
-      console.log("Database already initialized with recipes:", storedRecipes);
     }
   };
 
@@ -77,13 +75,16 @@ export const useDatabase = () => {
   };
 
   const updateSettings = async (newSettings: Partial<AppSettings>): Promise<void> => {
-    const currentSettings = await getSettings();
-    const updatedSettings = { ...currentSettings, ...newSettings };
-    await storeData(STORAGE_KEYS.SETTINGS, updatedSettings);
+    try {
+      const currentSettings = await getSettings();
+      const updatedSettings = { ...currentSettings, ...newSettings };
+      await storeData(STORAGE_KEYS.SETTINGS, updatedSettings);
+    } catch (error) {
+      console.error('Failed to update settings:', error);
+    }
   };
 
   return {
-    // Fonctions existantes
     storeRecipes,
     getRecipes,
     storeMealPlans,
@@ -91,7 +92,6 @@ export const useDatabase = () => {
     storeShoppingList,
     getShoppingList,
     getIsDarkMode,
-    // Nouvelles fonctions
     initializeDatabase,
     getDatabase,
     updateDatabase,

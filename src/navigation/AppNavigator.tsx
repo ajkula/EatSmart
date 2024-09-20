@@ -13,6 +13,7 @@ import ShoppingListDetailScreen from '../screens/ShoppingListDetailScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import MealPlannerScreen from '../screens/MealPlannerScreen';
 import { RootStackParamList } from '../types';
+import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 
 const RecipesStack = createStackNavigator<RootStackParamList>();
 const CalendarStack = createStackNavigator<RootStackParamList>();
@@ -74,11 +75,48 @@ const AppNavigator = () => {
         },
         tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: 'gray',
+        unmountOnBlur: true,
       })}
     >
-      <Tab.Screen name="Calendrier" component={CalendarStackScreen} />
-      <Tab.Screen name="Recettes" component={RecipesStackScreen} />
-      <Tab.Screen name="Courses" component={ShoppingStackScreen} />
+      <Tab.Screen 
+        name="Calendrier" 
+        component={CalendarStackScreen}
+        listeners={({ navigation, route }) => ({
+          tabPress: (e) => {
+            const routeName = getFocusedRouteNameFromRoute(route);
+            if (routeName && routeName !== 'CalendarMain') {
+              e.preventDefault();
+              navigation.navigate('Calendrier', { screen: 'CalendarMain' });
+            }
+          },
+        })}
+      />
+      <Tab.Screen 
+        name="Recettes" 
+        component={RecipesStackScreen}
+        listeners={({ navigation, route }) => ({
+          tabPress: (e) => {
+            const routeName = getFocusedRouteNameFromRoute(route);
+            if (routeName && routeName !== 'RecipesList') {
+              e.preventDefault();
+              navigation.navigate('Recettes', { screen: 'RecipesList' });
+            }
+          },
+        })}
+      />
+      <Tab.Screen 
+        name="Courses" 
+        component={ShoppingStackScreen}
+        listeners={({ navigation, route }) => ({
+          tabPress: (e) => {
+            const routeName = getFocusedRouteNameFromRoute(route);
+            if (routeName && routeName !== 'ShoppingList') {
+              e.preventDefault();
+              navigation.navigate('Courses', { screen: 'ShoppingList' });
+            }
+          },
+        })}
+      />
       <Tab.Screen name="Paramètres" component={SettingsScreen} />
     </Tab.Navigator>
   );

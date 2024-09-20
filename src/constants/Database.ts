@@ -15,9 +15,9 @@ export interface LocalDatabase {
 }
 
 export interface AppSettings {
-  darkMode: boolean;
+  isDarkMode: boolean;
   notificationsEnabled: boolean;
-  servingsCountts: number;
+  servingsCounts: number;
 }
 
 export const DEFAULT_DATABASE: LocalDatabase = {
@@ -206,13 +206,12 @@ export const DEFAULT_DATABASE: LocalDatabase = {
   mealPlans: [],
   shoppingList: [],
   settings: {
-    darkMode: false,
+    isDarkMode: false,
     notificationsEnabled: true,
-    servingsCountts: 4,
+    servingsCounts: 4,
   },
 };
 
-//  manipulation de la DB
 export const DATABASE_UTILS = {
   getNewRecipeId: (recipes: Recipe[]): string => {
     return `recipe_${Date.now()}_${Math.floor(Math.random() * 1000)}`;

@@ -17,21 +17,17 @@ type ShoppingListScreenProps = {
 };
 
 const ShoppingListScreen: React.FC<ShoppingListScreenProps> = ({ route }) => {
-  const { shoppingList, setShoppingList, mealPlans, recipes, isLoading, error, settings } = useAppContext();
+  const { shoppingList, setShoppingList, mealPlans, isLoading, error } = useAppContext();
   const [newItem, setNewItem] = useState('');
 
   useEffect(() => {
-    if (!isLoading && !error) {
-      const dates = route.params?.dates;
-      if (dates && dates.length > 0) {
+    if (!isLoading && !error && route.params && route.params.dates.length > 0 && route.params.servings) {
+      const {servings, dates} = route.params;
       const selectedMealPlans = mealPlans.filter((plan: MealPlan) => dates.includes(plan.date));
-      const generatedList = generateShoppingList(selectedMealPlans, settings.servingsCount);
+      const generatedList = generateShoppingList(selectedMealPlans, servings);
       setShoppingList(generatedList);
-    } else {
-      setShoppingList([]);
     }
-    }
-  }, [route.params?.dates, mealPlans, recipes, isLoading, error, settings.servingsCount]);
+  }, [route.params]);
 
   const addItem = () => {
     if (newItem.trim() !== '') {

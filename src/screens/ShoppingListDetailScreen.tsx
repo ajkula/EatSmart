@@ -10,7 +10,6 @@ const ShoppingListScreen = () => {
   const [newItem, setNewItem] = useState('');
 
   useEffect(() => {
-    // Générer la liste de courses basée sur les repas planifiés
     const generatedList = DATABASE_UTILS.generateShoppingList(mealPlans, recipes);
     setShoppingList(generatedList);
   }, [mealPlans, recipes]);

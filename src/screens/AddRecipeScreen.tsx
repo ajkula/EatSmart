@@ -37,10 +37,10 @@ const AddRecipeScreen = ({ navigation, route }: any) => {
     };
 
     if (editingRecipe) {
-      setRecipes(recipes.map((r: Recipe) => r.id === editingRecipe.id ? newRecipe : r));
+      setRecipes((prevRecipes: Recipe[]) => prevRecipes.map(r => r.id === editingRecipe.id ? newRecipe : r));
     } else {
-      setRecipes([...recipes, newRecipe]);
-    };
+      setRecipes((prevRecipes: Recipe[]) => [...prevRecipes, newRecipe]);
+    }
 
     navigation.goBack();
   };
