@@ -1,6 +1,8 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from 'react';
 import { Recipe, MealPlan, ShoppingListItem, RecipeCategory } from '../types';
 import { useDatabase } from '../hooks/useDatabase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { DEFAULT_DATABASE, STORAGE_KEYS } from '../constants/Database';
 
 interface AppSettings {
   isDarkMode: boolean;
@@ -22,6 +24,8 @@ interface AppContextType {
   isLoading: boolean;
   isInitialized: boolean;
   error: string | null;
+  debugAsyncStorage: () => Promise<void>;
+  resetAsyncStorage: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -50,6 +54,19 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
     getSettings,
     updateSettings,
   } = useDatabase();
+
+  const debugAsyncStorage = async () => {
+    const rawData = await AsyncStorage.getItem(STORAGE_KEYS.RECIPES);
+    const result = JSON.parse(rawData ?? '[]').map((r: Recipe) => r.name).join(', ');
+    console.log("Raw AsyncStorage data for recipes:", result);
+    return result;
+  };
+
+  const resetAsyncStorage = async () => {
+    await AsyncStorage.clear();
+    await initializeDatabase();
+    loadInitialData();
+  };
 
   const updateSettingsContext = async (newSettings: Partial<AppSettings>) => {
     try {
@@ -88,32 +105,51 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
     });
   }, []);
 
-  useEffect(() => {
-    const loadInitialData = async () => {
-      setIsLoading(true);
+  const loadInitialData = async () => {
+    setIsLoading(true);
+    try {
+      console.log("Starting to load initial data");
+      await initializeDatabase();
+      console.log("Database initialized");
+      
+      let storedRecipes;
       try {
-        await initializeDatabase();
-        const storedRecipes = await getRecipes();
-        setRecipes(storedRecipes);
-
-        const storedMealPlans = await getMealPlans();
-        setMealPlans(storedMealPlans || []);
-
-        const storedShoppingList = await getShoppingList();
-        setShoppingList(storedShoppingList || []);
-
-        const storedSettings = await getSettings();
-        setSettings(storedSettings);
-
-        setIsInitialized(true);
-      } catch (error) {
-        console.error("Failed to load initial data:", error);
-        setError("Failed to load initial data");
-      } finally {
-        setIsLoading(false);
+        storedRecipes = await getRecipes();
+      } catch (recipeError) {
+        console.error("Error loading recipes:", recipeError);
+        storedRecipes = DEFAULT_DATABASE.recipes;
       }
-    };
+      console.log("Recipes loaded:", storedRecipes.length);
+      setRecipes(storedRecipes);
+    
+      const storedMealPlans = await getMealPlans();
+      console.log("Meal plans loaded:", storedMealPlans?.length || 0);
+      setMealPlans(storedMealPlans || []);
+  
+      const storedShoppingList = await getShoppingList();
+      console.log("Shopping list loaded:", storedShoppingList?.length || 0);
+      setShoppingList(storedShoppingList || []);
+  
+      const storedSettings = await getSettings();
+      console.log("Settings loaded:", storedSettings);
+      setSettings(storedSettings);
+  
+      setIsInitialized(true);
+      console.log("Initial data loaded successfully");
 
+    } catch (error) {
+      console.error("Failed to load initial data:", error);
+      if (error instanceof Error) {
+        setError(`Failed to load initial data: ${error.message}`);
+      } else {
+        setError("An unknown error occurred while loading initial data");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     loadInitialData();
   }, []);
 
@@ -151,6 +187,8 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
         isLoading,
         isInitialized,
         error,
+        debugAsyncStorage,
+        resetAsyncStorage,
       }}
     >
       {children}

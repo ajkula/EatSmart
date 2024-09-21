@@ -26,7 +26,6 @@ const RecipeDetailScreen: React.FC<RecipeDetailScreenProps> = ({ route, navigati
     navigation.goBack();
   };
 
-  // recipe delete confirmation modal
   const [deleteModalVisible, setDeleteModalVisible] = React.useState(false);
   const showDeleteModal = () => setDeleteModalVisible(true);
   const hideDeleteModal = () => setDeleteModalVisible(false);

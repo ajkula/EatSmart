@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Recipe, MealPlan, ShoppingListItem, RecipeCategory } from '../types';
+import { Recipe, MealPlan, ShoppingListItem } from '../types';
 import { STORAGE_KEYS, LocalDatabase, DEFAULT_DATABASE, AppSettings } from '../constants/Database';
 
 export const useDatabase = () => {
@@ -7,18 +7,27 @@ export const useDatabase = () => {
     try {
       const jsonValue = JSON.stringify(value);
       await AsyncStorage.setItem(key, jsonValue);
+      console.log(`Data stored successfully for key: ${key}`);
     } catch (e) {
       console.error('Error storing data:', e);
+      throw e;
     }
   };
 
   const getData = async (key: string) => {
     try {
       const jsonValue = await AsyncStorage.getItem(key);
-      return jsonValue !== null ? JSON.parse(jsonValue) : null;
+      console.log(`Raw data retrieved for key ${key}:`, jsonValue);
+      if (jsonValue === null) {
+        console.log(`No data found for key ${key}`);
+        return null;
+      }
+      const parsedValue = JSON.parse(jsonValue);
+      console.log(`Parsed data for key ${key}:`, parsedValue);
+      return parsedValue;
     } catch (e) {
-      console.error('Error retrieving data:', e);
-      return null;
+      console.error(`Error retrieving or parsing data for key ${key}:`, e);
+      throw e;
     }
   };
 
@@ -43,9 +52,9 @@ export const useDatabase = () => {
 
   const initializeDatabase = async (): Promise<void> => {
     const storedRecipes = await getData(STORAGE_KEYS.RECIPES);
-    console.log("Stored recipes during initialization:", storedRecipes[0].name);
+    console.log("Stored recipes during initialization:", storedRecipes?.length || 0);
     if (!storedRecipes || storedRecipes.length === 0) {
-      console.log("Initializing database with default recipes:", DEFAULT_DATABASE.recipes[0].name);
+      console.log("Initializing database with default recipes:", DEFAULT_DATABASE.recipes.map(r => r.name).join(', '));
       await storeData(STORAGE_KEYS.RECIPES, DEFAULT_DATABASE.recipes);
       await storeData(STORAGE_KEYS.MEAL_PLANS, DEFAULT_DATABASE.mealPlans);
       await storeData(STORAGE_KEYS.SHOPPING_LIST, DEFAULT_DATABASE.shoppingList);

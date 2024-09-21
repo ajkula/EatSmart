@@ -11,36 +11,52 @@ export const generateMealPlan = (dates: string[], recipes: Recipe[], existingMea
   };
 
   const recentlyUsedRecipes = getRecentlyUsedRecipes(existingMealPlans, 7);
-  const availableRecipes = recipes.filter(recipe => !recentlyUsedRecipes.has(recipe.id));
+  let availableRecipes = recipes.filter(recipe => !recentlyUsedRecipes.has(recipe.id));
 
-  return dates.map(date => {
+  const newMealPlans: MealPlan[] = [];
+
+  for (const date of dates) {
     const existingPlan = existingMealPlans.find(plan => plan.date === date);
+    let dayRecipes: Set<string> = new Set();
+
     if (existingPlan) {
-      return {
+      const breakfast = existingPlan.meals.breakfast.recipe 
+        ? existingPlan.meals.breakfast 
+        : getRandomMeal(availableRecipes, ['petit déjeuner', 'dessert'], recipes, newMealPlans, date, dayRecipes);
+      dayRecipes.add(breakfast.recipe?.id || '');
+
+      const lunch = existingPlan.meals.lunch.recipe 
+        ? existingPlan.meals.lunch 
+        : getBalancedMeal(availableRecipes, ['entrée', 'plat principal', 'dessert'], mainMealCount, recipes, newMealPlans, date, dayRecipes);
+      dayRecipes.add(lunch.recipe?.id || '');
+
+      const dinner = existingPlan.meals.dinner.recipe 
+        ? existingPlan.meals.dinner 
+        : getBalancedMeal(availableRecipes, ['entrée', 'plat principal', 'dessert', 'apéro'], mainMealCount, recipes, newMealPlans, date, dayRecipes);
+
+      newMealPlans.push({
         ...existingPlan,
-        meals: {
-          breakfast: existingPlan.meals.breakfast.recipe 
-            ? existingPlan.meals.breakfast 
-            : getRandomMeal(availableRecipes, ['petit déjeuner', 'dessert'], recipes),
-          lunch: existingPlan.meals.lunch.recipe 
-            ? existingPlan.meals.lunch 
-            : getBalancedMeal(availableRecipes, ['entrée', 'plat principal', 'dessert'], mainMealCount, recipes),
-          dinner: existingPlan.meals.dinner.recipe 
-            ? existingPlan.meals.dinner 
-            : getBalancedMeal(availableRecipes, ['entrée', 'plat principal', 'dessert', 'apéro'], mainMealCount, recipes)
-        }
-      };
+        meals: { breakfast, lunch, dinner }
+      });
     } else {
-      return {
+      const breakfast = getRandomMeal(availableRecipes, ['petit déjeuner', 'dessert'], recipes, newMealPlans, date, dayRecipes);
+      dayRecipes.add(breakfast.recipe?.id || '');
+
+      const lunch = getBalancedMeal(availableRecipes, ['entrée', 'plat principal', 'dessert'], mainMealCount, recipes, newMealPlans, date, dayRecipes);
+      dayRecipes.add(lunch.recipe?.id || '');
+
+      const dinner = getBalancedMeal(availableRecipes, ['entrée', 'plat principal', 'dessert', 'apéro'], mainMealCount, recipes, newMealPlans, date, dayRecipes);
+
+      newMealPlans.push({
         date,
-        meals: {
-          breakfast: getRandomMeal(availableRecipes, ['petit déjeuner', 'dessert'], recipes),
-          lunch: getBalancedMeal(availableRecipes, ['entrée', 'plat principal', 'dessert'], mainMealCount, recipes),
-          dinner: getBalancedMeal(availableRecipes, ['entrée', 'plat principal', 'dessert', 'apéro'], mainMealCount, recipes)
-        }
-      };
+        meals: { breakfast, lunch, dinner }
+      });
     }
-  });
+
+    availableRecipes = updateAvailableRecipes(availableRecipes, newMealPlans[newMealPlans.length - 1], recipes);
+  }
+
+  return newMealPlans;
 };
 
 const getRecentlyUsedRecipes = (mealPlans: MealPlan[], days: number): Set<string> => {
@@ -59,37 +75,85 @@ const getRecentlyUsedRecipes = (mealPlans: MealPlan[], days: number): Set<string
   return recentRecipes;
 };
 
-const getRandomMeal = (availableRecipes: Recipe[], categories: RecipeCategory[], allRecipes: Recipe[]): MealPlanItem => {
-  let filteredRecipes = availableRecipes.filter(recipe => categories.includes(recipe.category));
+const getRandomMeal = (availableRecipes: Recipe[], categories: RecipeCategory[], allRecipes: Recipe[], currentMealPlans: MealPlan[], currentDate: string, dayRecipes: Set<string>): MealPlanItem => {
+  let filteredRecipes = availableRecipes.filter(recipe => 
+    categories.includes(recipe.category) && !dayRecipes.has(recipe.id)
+  );
   
   if (filteredRecipes.length === 0) {
-    // If no available recipes, fall back to all recipes
+    filteredRecipes = allRecipes.filter(recipe => 
+      categories.includes(recipe.category) && !dayRecipes.has(recipe.id)
+    );
+  }
+
+  if (filteredRecipes.length === 0) {
     filteredRecipes = allRecipes.filter(recipe => categories.includes(recipe.category));
   }
 
-  if (filteredRecipes.length === 0) {
-    return { recipe: null };
-  }
+  filteredRecipes.sort((a, b) => {
+    const lastUsedA = getLastUsedDate(a, currentMealPlans);
+    const lastUsedB = getLastUsedDate(b, currentMealPlans);
+    return lastUsedA.getTime() - lastUsedB.getTime();
+  });
 
-  const randomRecipe = filteredRecipes[Math.floor(Math.random() * filteredRecipes.length)];
-  return { recipe: randomRecipe };
+  return { recipe: filteredRecipes[0] || null };
 };
 
-const getBalancedMeal = (availableRecipes: Recipe[], categories: MainMealCategory[], mealCount: Record<MainMealCategory, number>, allRecipes: Recipe[]): MealPlanItem => {
+const getBalancedMeal = (availableRecipes: Recipe[], categories: MainMealCategory[], mealCount: Record<MainMealCategory, number>, allRecipes: Recipe[], currentMealPlans: MealPlan[], currentDate: string, dayRecipes: Set<string>): MealPlanItem => {
   const leastUsedCategory = categories.reduce((a, b) => mealCount[a] < mealCount[b] ? a : b);
-  let filteredRecipes = availableRecipes.filter(recipe => recipe.category === leastUsedCategory);
+  let filteredRecipes = availableRecipes.filter(recipe => 
+    recipe.category === leastUsedCategory && !dayRecipes.has(recipe.id)
+  );
   
   if (filteredRecipes.length === 0) {
-    // If no available recipes in the least used category, try all categories
-    filteredRecipes = availableRecipes.filter(recipe => categories.includes(recipe.category as MainMealCategory));
+    filteredRecipes = availableRecipes.filter(recipe => 
+      categories.includes(recipe.category as MainMealCategory) && !dayRecipes.has(recipe.id)
+    );
   }
 
   if (filteredRecipes.length === 0) {
-    // If still no available recipes, fall back to all recipes
-    return getRandomMeal(allRecipes, categories, allRecipes);
+    filteredRecipes = allRecipes.filter(recipe => 
+      categories.includes(recipe.category as MainMealCategory) && !dayRecipes.has(recipe.id)
+    );
   }
 
-  const randomRecipe = filteredRecipes[Math.floor(Math.random() * filteredRecipes.length)];
-  mealCount[randomRecipe.category as MainMealCategory]++;
-  return { recipe: randomRecipe };
+  if (filteredRecipes.length === 0) {
+    filteredRecipes = allRecipes.filter(recipe => categories.includes(recipe.category as MainMealCategory));
+  }
+
+  filteredRecipes.sort((a, b) => {
+    const lastUsedA = getLastUsedDate(a, currentMealPlans);
+    const lastUsedB = getLastUsedDate(b, currentMealPlans);
+    return lastUsedA.getTime() - lastUsedB.getTime();
+  });
+
+  const selectedRecipe = filteredRecipes[0];
+  if (selectedRecipe) {
+    mealCount[selectedRecipe.category as MainMealCategory]++;
+  }
+  return { recipe: selectedRecipe || null };
+};
+
+const getLastUsedDate = (recipe: Recipe, mealPlans: MealPlan[]): Date => {
+  for (let i = mealPlans.length - 1; i >= 0; i--) {
+    const plan = mealPlans[i];
+    if (Object.values(plan.meals).some(meal => meal.recipe?.id === recipe.id)) {
+      return new Date(plan.date);
+    }
+  }
+  return new Date(0);
+};
+
+const updateAvailableRecipes = (availableRecipes: Recipe[], latestMealPlan: MealPlan, allRecipes: Recipe[]): Recipe[] => {
+  const usedRecipeIds = new Set(Object.values(latestMealPlan.meals)
+    .filter(meal => meal.recipe)
+    .map(meal => meal.recipe!.id));
+
+  let updatedRecipes = availableRecipes.filter(recipe => !usedRecipeIds.has(recipe.id));
+  
+  if (updatedRecipes.length === 0) {
+    updatedRecipes = allRecipes;
+  }
+
+  return updatedRecipes;
 };
