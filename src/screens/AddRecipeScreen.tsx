@@ -8,7 +8,7 @@ import { parseRecipe } from '../utils/recipeParser';
 import SelectComponent from '../components/SelectComponent';
 
 const AddRecipeScreen = ({ navigation, route }: any) => {
-  const { recipes, setRecipes } = useAppContext();
+  const { recipes, setRecipes, updateRecipe } = useAppContext();
   const { colors } = useTheme();
   const editingRecipe = route.params?.recipe;
   
@@ -37,9 +37,9 @@ const AddRecipeScreen = ({ navigation, route }: any) => {
     };
 
     if (editingRecipe) {
-      setRecipes((prevRecipes: Recipe[]) => prevRecipes.map(r => r.id === editingRecipe.id ? newRecipe : r));
+      updateRecipe(newRecipe);
     } else {
-      setRecipes((prevRecipes: Recipe[]) => [...prevRecipes, newRecipe]);
+      setRecipes([...recipes, newRecipe]);
     }
 
     navigation.goBack();

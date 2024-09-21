@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from 'react';
 import { Recipe, MealPlan, ShoppingListItem, RecipeCategory } from '../types';
 import { useDatabase } from '../hooks/useDatabase';
 
@@ -11,6 +11,7 @@ interface AppSettings {
 interface AppContextType {
   recipes: Recipe[];
   setRecipes: React.Dispatch<React.SetStateAction<Recipe[]>>;
+  updateRecipe: (updatedRecipe: Recipe) => void;
   mealPlans: MealPlan[];
   setMealPlans: React.Dispatch<React.SetStateAction<MealPlan[]>>;
   shoppingList: ShoppingListItem[];
@@ -38,17 +39,6 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
   const [isInitialized, setIsInitialized] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const updateSettingsContext = async (newSettings: Partial<AppSettings>) => {
-    try {
-      const updatedSettings = { ...settings, ...newSettings };
-      setSettings(updatedSettings);
-      await updateSettings(updatedSettings);
-      console.log('Settings updated:', updatedSettings);
-    } catch (error) {
-      console.error('Failed to update settings:', error);
-    }
-  };
-
   const {
     initializeDatabase,
     getRecipes,
@@ -60,6 +50,43 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
     getSettings,
     updateSettings,
   } = useDatabase();
+
+  const updateSettingsContext = async (newSettings: Partial<AppSettings>) => {
+    try {
+      const updatedSettings = { ...settings, ...newSettings };
+      setSettings(updatedSettings);
+      await updateSettings(updatedSettings);
+      console.log('Settings updated:', updatedSettings);
+    } catch (error) {
+      console.error('Failed to update settings:', error);
+    }
+  };
+
+  const updateRecipe = useCallback((updatedRecipe: Recipe) => {
+    setRecipes(prevRecipes => {
+      const newRecipes = prevRecipes.map(recipe => 
+        recipe.id === updatedRecipe.id ? updatedRecipe : recipe
+      );
+      return newRecipes;
+    });
+
+    setMealPlans(prevMealPlans => {
+      return prevMealPlans.map(mealPlan => ({
+        ...mealPlan,
+        meals: {
+          breakfast: mealPlan.meals.breakfast.recipe?.id === updatedRecipe.id 
+            ? { recipe: updatedRecipe } 
+            : mealPlan.meals.breakfast,
+          lunch: mealPlan.meals.lunch.recipe?.id === updatedRecipe.id 
+            ? { recipe: updatedRecipe } 
+            : mealPlan.meals.lunch,
+          dinner: mealPlan.meals.dinner.recipe?.id === updatedRecipe.id 
+            ? { recipe: updatedRecipe } 
+            : mealPlan.meals.dinner,
+        }
+      }));
+    });
+  }, []);
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -113,6 +140,7 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
       value={{
         recipes,
         setRecipes,
+        updateRecipe,
         mealPlans,
         setMealPlans,
         shoppingList,

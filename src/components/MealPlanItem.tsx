@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text, TouchableRipple } from 'react-native-paper';
 import { MealPlanItem as MealPlanItemType } from '../types';
@@ -15,7 +15,7 @@ const MealPlanItem: React.FC<MealPlanItemProps> = ({ mealType, item, onPress }) 
       <View style={styles.container}>
         <Text style={styles.mealType}>{mealType.charAt(0).toUpperCase() + mealType.slice(1)}</Text>
         <Text style={styles.mealName}>
-          {item.recipe ? item.recipe.name : item.name || 'Not planned'}
+          {item.recipe?.name ?? 'Not planned'}
         </Text>
       </View>
     </TouchableRipple>
@@ -38,4 +38,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default MealPlanItem;
+export default memo(MealPlanItem);
