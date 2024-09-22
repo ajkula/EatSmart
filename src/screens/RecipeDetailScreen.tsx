@@ -57,6 +57,7 @@ const RecipeDetailScreen: React.FC<RecipeDetailScreenProps> = ({ route, navigati
         <Button mode="contained" onPress={handleEditRecipe}>Editer Recette</Button>
         <Button mode="outlined" onPress={showDeleteModal}>Effacer Recette</Button>
       </View>
+      <View style={{ height: 40 }}></View>
       <Portal>
         <Modal
           visible={deleteModalVisible}

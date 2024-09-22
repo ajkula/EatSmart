@@ -9,7 +9,6 @@ import AddRecipeScreen from '../screens/AddRecipeScreen';
 import CalendarScreen from '../screens/CalendarScreen';
 import MealPlanEditScreen from '../screens/MealPlanEditScreen';
 import ShoppingListScreen from '../screens/ShoppingListScreen';
-import ShoppingListDetailScreen from '../screens/ShoppingListDetailScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import MealPlannerScreen from '../screens/MealPlannerScreen';
 import { RootStackParamList } from '../types';
@@ -49,8 +48,6 @@ const ShoppingStackScreen = () => (
   <ShoppingStack.Navigator>
     <ShoppingStack.Screen name="ShoppingList" component={ShoppingListScreen}
       options={{ title: 'Liste de Courses' }} />
-    <ShoppingStack.Screen name="ShoppingListDetail" component={ShoppingListDetailScreen}
-      options={{ title: 'Détails de la Liste' }} />
   </ShoppingStack.Navigator>
 );
 
