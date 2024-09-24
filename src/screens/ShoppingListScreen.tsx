@@ -20,14 +20,22 @@ const ShoppingListScreen: React.FC<ShoppingListScreenProps> = ({ route }) => {
   const { shoppingList, setShoppingList, mealPlans, isLoading, error } = useAppContext();
   const [newItem, setNewItem] = useState('');
 
-  useEffect(() => {
-    if (!isLoading && !error && route.params && route.params.dates.length > 0 && route.params.servings) {
-      const {servings, dates} = route.params;
-      const selectedMealPlans = mealPlans.filter((plan: MealPlan) => dates.includes(plan.date));
-      const generatedList = generateShoppingList(selectedMealPlans, servings);
-      setShoppingList(generatedList);
+  useEffect(() => {  
+    const { dates, recipes, servings } = route.params || {};
+  
+    if (!isLoading && !error) {
+      if (recipes && recipes.length > 0) {
+        const generatedList = generateShoppingList(recipes, servings || 1);
+        setShoppingList(generatedList);
+      } else if (dates && dates.length > 0 && servings) {
+        const selectedMealPlans = mealPlans.filter((plan: MealPlan) => dates.includes(plan.date));
+        const generatedList = generateShoppingList(selectedMealPlans, servings);
+        setShoppingList(generatedList);
+      } else {
+        console.log("No valid params for generating shopping list");
+      }
     }
-  }, [route.params]);
+  }, [route.params, isLoading, error, mealPlans]);
 
   const addItem = () => {
     if (newItem.trim() !== '') {
@@ -80,7 +88,7 @@ const ShoppingListScreen: React.FC<ShoppingListScreenProps> = ({ route }) => {
           style={styles.input}
           value={newItem}
           onChangeText={setNewItem}
-          placeholder="Ajouter item"
+          placeholder="Ajouter article"
         />
         <Button style={styles.button} mode="contained" onPress={addItem}>
           Ajouter
@@ -124,13 +132,16 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     marginBottom: 10,
-    height: 50,
-    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   input: {
-    flex: 4,
+    flex: 1,
     marginRight: 8,
-    borderCurve: 'circular',
+    height: 43,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    paddingHorizontal: 10,
   },
   button: {
     backgroundColor: '#25B5A2',
@@ -138,8 +149,10 @@ const styles = StyleSheet.create({
     alignContent: 'center',
     alignItems: 'center',
     fontSize: 24,
+    height: 45,
   },
   deleteButton: {
+    height: 44,
     backgroundColor: '#f80B5C',
     marginLeft: 8,
     textAlign: 'center',

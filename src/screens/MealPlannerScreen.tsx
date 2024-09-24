@@ -26,7 +26,6 @@ const MealPlannerScreen: React.FC<MealPlannerScreenProps> = ({ route, navigation
           newMealPlans.push(plan);
         }
       });
-      console.log('Updated meal plans:', newMealPlans);
       return newMealPlans;
     });
     navigation.goBack();

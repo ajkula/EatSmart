@@ -1,27 +1,17 @@
-import { MealPlan, ShoppingListItem } from '../types';
+import { MealPlan, ShoppingListItem, Recipe } from '../types';
 
-export function generateShoppingList(mealPlans: MealPlan[], servings: number): ShoppingListItem[] {
-  console.log(`Generating shopping list for ${mealPlans.length} meal plans with ${servings} servings`);
+
+type InputType = MealPlan[] | Recipe[];
+
+export function generateShoppingList(input: InputType, servings: number): ShoppingListItem[] {
   const ingredientMap = new Map<string, { quantity: number, rest: string }>();
 
-  mealPlans.forEach((mealPlan, index) => {
-    console.log(`Processing meal plan ${index + 1}:`);
-    Object.entries(mealPlan.meals).forEach(([mealType, meal]) => {
-      if (meal.recipe) {
-        console.log(`  Processing ${mealType}: ${meal.recipe.name}`);
-        meal.recipe.ingredients.forEach(ingredient => {
-          console.log(`    Ingredient: "${ingredient}"`);
-          const { quantity, rest } = parseIngredient(ingredient);
-          console.log(`      Parsed: quantity = ${quantity}, rest = "${rest}"`);
-          const current = ingredientMap.get(rest) || { quantity: 0, rest };
-          const adjustedQuantity = quantity * (servings / (meal?.recipe?.servings ?? 1));
-          console.log(`      Adjusted quantity: ${adjustedQuantity} (${quantity} * ${servings} / ${meal?.recipe?.servings ?? 1})`);
-          const newQuantity = current.quantity + adjustedQuantity;
-          console.log(`      New total quantity: ${newQuantity} (${current.quantity} + ${adjustedQuantity})`);
-          ingredientMap.set(rest, { quantity: newQuantity, rest });
-        });
-      }
-    });
+  input.forEach((item) => {
+    if ('meals' in item) {
+      processMealPlan(item, servings, ingredientMap);
+    } else {
+      processRecipe(item, servings, ingredientMap);
+    }
   });
 
   return Array.from(ingredientMap).map(([rest, { quantity }], index) => ({
@@ -29,6 +19,24 @@ export function generateShoppingList(mealPlans: MealPlan[], servings: number): S
     name: formatIngredient(quantity, rest),
     checked: false
   }));
+}
+
+function processMealPlan(mealPlan: MealPlan, servings: number, ingredientMap: Map<string, { quantity: number, rest: string }>) {
+  Object.entries(mealPlan.meals).forEach(([mealType, meal]) => {
+    if (meal.recipe) {
+      processRecipe(meal.recipe, servings, ingredientMap);
+    }
+  });
+}
+
+function processRecipe(recipe: Recipe, servings: number, ingredientMap: Map<string, { quantity: number, rest: string }>) {
+  recipe.ingredients.forEach(ingredient => {
+    const { quantity, rest } = parseIngredient(ingredient);
+    const current = ingredientMap.get(rest) || { quantity: 0, rest };
+    const adjustedQuantity = quantity * (servings / (recipe.servings ?? 1));
+    const newQuantity = current.quantity + adjustedQuantity;
+    ingredientMap.set(rest, { quantity: newQuantity, rest });
+  });
 }
 
 function parseIngredient(ingredient: string): { quantity: number, rest: string } {

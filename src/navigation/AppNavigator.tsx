@@ -28,6 +28,8 @@ const RecipesStackScreen = () => (
     <RecipesStack.Screen name="AddRecipe" component={AddRecipeScreen} 
       options={({ route }) => ({ title: route.params?.recipe ? 'Édition Recette' : 'Ajout Recette' })}
     />
+    <RecipesStack.Screen name="ShoppingList" component={ShoppingListScreen}
+      options={{ title: 'Liste de Courses' }} />
   </RecipesStack.Navigator>
 );
 

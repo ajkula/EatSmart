@@ -29,10 +29,10 @@ const ThemedApp = () => {
     },
   };
 
-  useEffect(() => {
-    console.log('AppContent rendered. isLoading:', isLoading, 'error:', error, 'isInitialized:', isInitialized);
-    console.log('Recipes count:', recipes.length);
-  }, [isLoading, error, isInitialized, recipes]);
+  // useEffect(() => {
+  //   console.log('AppContent rendered. isLoading:', isLoading, 'error:', error, 'isInitialized:', isInitialized);
+  //   console.log('Recipes count:', recipes.length);
+  // }, [isLoading, error, isInitialized, recipes]);
 
   const renderContent = () => {
     if (isLoading || !isInitialized) {

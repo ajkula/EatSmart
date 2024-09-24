@@ -58,7 +58,6 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
   const debugAsyncStorage = async () => {
     const rawData = await AsyncStorage.getItem(STORAGE_KEYS.RECIPES);
     const result = JSON.parse(rawData ?? '[]').map((r: Recipe) => r.name).join(', ');
-    console.log("Raw AsyncStorage data for recipes:", result);
     return result;
   };
 
@@ -73,7 +72,6 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
       const updatedSettings = { ...settings, ...newSettings };
       setSettings(updatedSettings);
       await updateSettings(updatedSettings);
-      console.log('Settings updated:', updatedSettings);
     } catch (error) {
       console.error('Failed to update settings:', error);
     }
@@ -108,9 +106,7 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
   const loadInitialData = async () => {
     setIsLoading(true);
     try {
-      console.log("Starting to load initial data");
       await initializeDatabase();
-      console.log("Database initialized");
       
       let storedRecipes;
       try {
@@ -119,24 +115,18 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
         console.error("Error loading recipes:", recipeError);
         storedRecipes = DEFAULT_DATABASE.recipes;
       }
-      console.log("Recipes loaded:", storedRecipes.length);
       setRecipes(storedRecipes);
     
       const storedMealPlans = await getMealPlans();
-      console.log("Meal plans loaded:", storedMealPlans?.length || 0);
       setMealPlans(storedMealPlans || []);
   
       const storedShoppingList = await getShoppingList();
-      console.log("Shopping list loaded:", storedShoppingList?.length || 0);
       setShoppingList(storedShoppingList || []);
   
       const storedSettings = await getSettings();
-      console.log("Settings loaded:", storedSettings);
       setSettings(storedSettings);
   
       setIsInitialized(true);
-      console.log("Initial data loaded successfully");
-
     } catch (error) {
       console.error("Failed to load initial data:", error);
       if (error instanceof Error) {

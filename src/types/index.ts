@@ -42,7 +42,7 @@ export type RootStackParamList = {
   ShoppingListDetail: { itemId: string };
   Settings: undefined;
   MealPlanner: { dates: string[] };
-  ShoppingList: { dates: string[], servings: number };
+  ShoppingList: { dates?: string[], servings: number, recipes?: Recipe[] };
 };
 
 export type RecipeDetailScreenNavigationProp = StackNavigationProp<RootStackParamList, 'RecipeDetail'>;

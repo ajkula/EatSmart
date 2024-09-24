@@ -7,7 +7,6 @@ export const useDatabase = () => {
     try {
       const jsonValue = JSON.stringify(value);
       await AsyncStorage.setItem(key, jsonValue);
-      console.log(`Data stored successfully for key: ${key}`);
     } catch (e) {
       console.error('Error storing data:', e);
       throw e;
@@ -17,13 +16,11 @@ export const useDatabase = () => {
   const getData = async (key: string) => {
     try {
       const jsonValue = await AsyncStorage.getItem(key);
-      console.log(`Raw data retrieved for key ${key}:`, jsonValue);
       if (jsonValue === null) {
         console.log(`No data found for key ${key}`);
         return null;
       }
       const parsedValue = JSON.parse(jsonValue);
-      console.log(`Parsed data for key ${key}:`, parsedValue);
       return parsedValue;
     } catch (e) {
       console.error(`Error retrieving or parsing data for key ${key}:`, e);
@@ -38,7 +35,6 @@ export const useDatabase = () => {
       console.log("No recipes found, returning default recipes");
       return DEFAULT_DATABASE.recipes;
     }
-    console.log("Retrieved recipes:", recipes[0].name);
     return recipes;
   };
 
@@ -52,9 +48,7 @@ export const useDatabase = () => {
 
   const initializeDatabase = async (): Promise<void> => {
     const storedRecipes = await getData(STORAGE_KEYS.RECIPES);
-    console.log("Stored recipes during initialization:", storedRecipes?.length || 0);
     if (!storedRecipes || storedRecipes.length === 0) {
-      console.log("Initializing database with default recipes:", DEFAULT_DATABASE.recipes.map(r => r.name).join(', '));
       await storeData(STORAGE_KEYS.RECIPES, DEFAULT_DATABASE.recipes);
       await storeData(STORAGE_KEYS.MEAL_PLANS, DEFAULT_DATABASE.mealPlans);
       await storeData(STORAGE_KEYS.SHOPPING_LIST, DEFAULT_DATABASE.shoppingList);

@@ -1,29 +1,27 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { View, FlatList, StyleSheet } from 'react-native';
 import { Searchbar, ActivityIndicator, Modal, Text, Button, Icon, Checkbox, TextInput } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import RecipeCard from '../components/RecipeCard';
 import { useAppContext } from '../context/AppContext';
-import { Recipe, RecipeCategory } from '../types';
+import { Recipe, RecipeCategory, RootStackParamList } from '../types';
 import { Picker } from '@react-native-picker/picker';
-
-type RootStackParamList = {
-  RecipeDetail: { recipe: Recipe };
-  AddRecipe: undefined;
-};
+import { useTheme } from '../hooks/useTheme';
 
 type Filters = {
   category: RecipeCategory | false;
   prepTime: number | false;
   ingredients: string[];
 }
-type RecipesScreenNavigationProp = StackNavigationProp<RootStackParamList, 'RecipeDetail'>;
+type RecipesScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
 const RecipesScreen = () => {
+  const { settings } = useAppContext();
   const recipeCategories: RecipeCategory[] = ['entrée', 'plat principal', 'dessert', 'petit déjeuner', 'apéro'];
   const defaultFilters: Filters = { category: false, prepTime: false, ingredients: [] };
   const { recipes, isLoading, isInitialized, error } = useAppContext();
+  const { theme } = useTheme();
   const [searchQuery, setSearchQuery] = React.useState('');
   const [isSelecting, setIsSelecting] = React.useState(false);
   const [selectedRecipes, setSelectedRecipes] = React.useState<Recipe[]>([]);
@@ -41,25 +39,32 @@ const RecipesScreen = () => {
     return matchesSearch && matchesCategory && matchesPrepTime;
   });
 
-  const handleSelect = (recipe: Recipe) => {
-    if (selectedRecipes.includes(recipe)) {
-      setSelectedRecipes(selectedRecipes.filter(r => r !== recipe));
-    } else {
-      setSelectedRecipes([...selectedRecipes, recipe]);
+  const toggleSelectMode = useCallback(() => {
+    if (isSelecting && selectedRecipes.length > 0) {
+      navigation.navigate('ShoppingList', {
+        dates: [],
+        servings: settings.servingsCounts ?? 2,
+        recipes: selectedRecipes,
+      });
+      setSelectedRecipes([]);
     }
-  }
+    setIsSelecting(!isSelecting);
+  }, [isSelecting, selectedRecipes, navigation]);
 
-  const handleFilters = (filters: Filters) => {
-    setFilters(filters);
-  }
-
+  const handleSelect = useCallback((recipe: Recipe) => {
+    setSelectedRecipes(prev =>
+      prev.includes(recipe)
+        ? prev.filter(r => r.id !== recipe.id)
+        : [...prev, recipe]
+    );
+  }, []);
 
   const handleRecipePress = (recipe: Recipe) => {
     navigation.navigate('RecipeDetail', { recipe });
   };
 
   const handleAddRecipe = () => {
-    navigation.navigate('AddRecipe');
+    navigation.navigate('AddRecipe', { recipe: undefined });
   };
 
   if (isLoading) {
@@ -108,7 +113,7 @@ const RecipesScreen = () => {
         </Button>
         <Button
           mode="contained"
-          onPress={() => setIsSelecting(!isSelecting)}
+          onPress={toggleSelectMode}
           style={styles.selectButton}
           contentStyle={styles.buttonContent}
         >
@@ -120,7 +125,15 @@ const RecipesScreen = () => {
       </View>
       <FlatList
         data={filteredRecipes}
-        renderItem={({ item }) => <RecipeCard recipe={item} onPress={handleRecipePress} />}
+        renderItem={({ item }) => (
+          <RecipeCard
+            recipe={item}
+            onPress={handleRecipePress}
+            isSelecting={isSelecting}
+            isSelected={selectedRecipes.includes(item)}
+            onSelect={handleSelect}
+          />
+        )}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.list}
       />
@@ -133,14 +146,14 @@ const RecipesScreen = () => {
       <Modal
         visible={filterModalVisible}
         onDismiss={() => setFilterModalVisible(false)}
-        contentContainerStyle={styles.modalContent}
+        contentContainerStyle={[styles.modalContent, { backgroundColor: theme.colors.surface }]}
       >
-        <Text style={styles.modalTitle}>Filtres</Text>
+        <Text style={[styles.modalTitle, { color: theme.colors.onSurface }]}>Filtres</Text>
         <View style={styles.filterOptions}>
           <Text style={styles.filterLabel}>Catégorie :</Text>
           <Picker
             selectedValue={filters.category || 'none'}
-            style={styles.picker}
+            style={[styles.picker, { color: theme.colors.onSurface }] as any}
             onValueChange={(itemValue) =>
               setFilters({ ...filters, category: itemValue === 'none' ? false : itemValue as RecipeCategory })
             }
@@ -151,7 +164,7 @@ const RecipesScreen = () => {
             ))}
           </Picker>
 
-          <Text style={styles.filterLabel}>Temps de préparation maximum (minutes) :</Text>
+          <Text style={[styles.filterLabel, { color: theme.colors.onSurface }]}>Temps de préparation maximum (minutes) :</Text>
           <View style={styles.prepTimeContainer}>
             <TextInput
               style={styles.prepTimeInput}
@@ -255,6 +268,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   picker: {
+    borderWidth: 1,
+    backgroundColor: '#555',
+    borderColor: '#ccc',
+    borderRadius: 5,
     marginBottom: 15,
   },
   prepTimeContainer: {
@@ -267,8 +284,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 5,
-    padding: 8,
+    height: 50,
     marginRight: 10,
+    marginTop: 5,
   },
   modalButtons: {
     flexDirection: 'row',
